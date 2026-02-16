@@ -1,9 +1,9 @@
 #Assignment 01 - Balanceador de carga Round Robin (Nginx + Docker Compose)
 
-#Comando para ejecutar la infraestructura
+#Comando para ejecutar la infraestructura:
 docker compose up
 
-#URL del balanceador
+#URL del balanceador:
 http://localhost:8080
 
 ## Diagrama de la infraestructura
