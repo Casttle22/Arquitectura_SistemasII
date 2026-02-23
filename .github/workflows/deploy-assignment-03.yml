@@ -1,0 +1,99 @@
+name: Deploy Assignment-03 (Docker -> ECR -> Beanstalk)
+
+on:
+  push:
+    branches: ["assignment-03"]
+    paths:
+      - "assignment-03/**"
+      - ".github/workflows/deploy-assignment-03.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    environment: assignment-03
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Compute variables
+        id: vars
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          echo "account_id=$ACCOUNT_ID" >> $GITHUB_OUTPUT
+
+          SHORT_SHA="${GITHUB_SHA::7}"
+          echo "short_sha=$SHORT_SHA" >> $GITHUB_OUTPUT
+
+          ECR_REGISTRY="${ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com"
+          IMAGE_URI="${ECR_REGISTRY}/${{ secrets.ECR_REPOSITORY }}:${SHORT_SHA}"
+          echo "image_uri=$IMAGE_URI" >> $GITHUB_OUTPUT
+
+          EB_BUCKET="elasticbeanstalk-${{ secrets.AWS_REGION }}-${ACCOUNT_ID}"
+          echo "eb_bucket=$EB_BUCKET" >> $GITHUB_OUTPUT
+
+          VERSION_LABEL="as3-${SHORT_SHA}-${GITHUB_RUN_NUMBER}"
+          echo "version_label=$VERSION_LABEL" >> $GITHUB_OUTPUT
+
+          S3_KEY="${{ secrets.EB_APPLICATION_NAME }}/${VERSION_LABEL}.zip"
+          echo "s3_key=$S3_KEY" >> $GITHUB_OUTPUT
+
+      - name: Login to ECR
+        run: |
+          aws ecr get-login-password --region "${{ secrets.AWS_REGION }}" \
+            | docker login --username AWS --password-stdin "${{ steps.vars.outputs.account_id }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com"
+
+      - name: Build Docker image
+        run: |
+          docker build -t "${{ steps.vars.outputs.image_uri }}" -f assignment-03/Dockerfile assignment-03
+
+      - name: Push Docker image
+        run: docker push "${{ steps.vars.outputs.image_uri }}"
+
+      - name: Create Dockerrun bundle
+        run: |
+          cat > Dockerrun.aws.json <<EOF
+          {
+            "AWSEBDockerrunVersion": "1",
+            "Image": {
+              "Name": "${{ steps.vars.outputs.image_uri }}",
+              "Update": "true"
+            },
+            "Ports": [
+              { "ContainerPort": 80 }
+            ]
+          }
+          EOF
+          zip -r bundle.zip Dockerrun.aws.json
+
+      - name: Upload bundle to EB S3 bucket
+        run: |
+          aws s3 cp bundle.zip "s3://${{ steps.vars.outputs.eb_bucket }}/${{ steps.vars.outputs.s3_key }}"
+
+      - name: Create application version
+        run: |
+          aws elasticbeanstalk create-application-version \
+            --application-name "${{ secrets.EB_APPLICATION_NAME }}" \
+            --version-label "${{ steps.vars.outputs.version_label }}" \
+            --source-bundle S3Bucket="${{ steps.vars.outputs.eb_bucket }}",S3Key="${{ steps.vars.outputs.s3_key }}" \
+            --process
+
+      - name: Deploy to environment
+        run: |
+          aws elasticbeanstalk update-environment \
+            --environment-name "${{ secrets.EB_ENVIRONMENT_NAME }}" \
+            --version-label "${{ steps.vars.outputs.version_label }}"
+
+      - name: Wait for environment update
+        run: aws elasticbeanstalk wait environment-updated --environment-names "${{ secrets.EB_ENVIRONMENT_NAME }}"
