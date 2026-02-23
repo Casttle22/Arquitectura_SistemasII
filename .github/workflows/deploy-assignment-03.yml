@@ -27,6 +27,21 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
+      - name: Validate required secrets
+        env:
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+          EB_APPLICATION_NAME: ${{ secrets.EB_APPLICATION_NAME }}
+          EB_ENVIRONMENT_NAME: ${{ secrets.EB_ENVIRONMENT_NAME }}
+        run: |
+          for v in AWS_REGION ECR_REPOSITORY EB_APPLICATION_NAME EB_ENVIRONMENT_NAME; do
+            if [ -z "${!v}" ]; then
+              echo "Missing secret: $v"
+              exit 1
+            fi
+          done
+          echo "All required secrets are present."
+
       - name: Compute variables
         id: vars
         run: |
