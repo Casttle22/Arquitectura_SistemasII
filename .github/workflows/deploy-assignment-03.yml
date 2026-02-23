@@ -78,7 +78,7 @@ jobs:
 
       - name: Create Dockerrun bundle
         run: |
-          cat > Dockerrun.aws.json <<EOF
+          cat > Dockerrun.aws.json <<'EOF'
           {
             "AWSEBDockerrunVersion": "1",
             "Image": {
@@ -90,11 +90,17 @@ jobs:
             ]
           }
           EOF
+
+          rm -f bundle.zip
           zip -r bundle.zip Dockerrun.aws.json
+
+      - name: Verify bundle contents
+        run: |
+          unzip -l bundle.zip
 
       - name: Upload bundle to EB S3 bucket
         run: |
-          aws s3 cp bundle.zip "s3://${{ steps.vars.outputs.eb_bucket }}/${{ steps.vars.outputs.s3_key }}"
+          aws s3 cp bundle.zip "s3://${{ steps.vars.outputs.eb_bucket }}/${{ steps.vars.outputs.s3_key }}" --acl bucket-owner-full-control
 
       - name: Create application version
         run: |
