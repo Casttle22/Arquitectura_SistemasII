@@ -58,7 +58,7 @@ jobs:
           EB_BUCKET="elasticbeanstalk-${{ secrets.AWS_REGION }}-${ACCOUNT_ID}"
           echo "eb_bucket=$EB_BUCKET" >> $GITHUB_OUTPUT
 
-          VERSION_LABEL="as3-${SHORT_SHA}-${GITHUB_RUN_NUMBER}"
+          VERSION_LABEL="as3-${SHORT_SHA}-${GITHUB_RUN_ID}"
           echo "version_label=$VERSION_LABEL" >> $GITHUB_OUTPUT
 
           S3_KEY="${{ secrets.EB_APPLICATION_NAME }}/${VERSION_LABEL}.zip"
