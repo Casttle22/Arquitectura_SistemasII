@@ -5,6 +5,9 @@
   text-align: center;
 }
 
+/* Ajuste simple para evidenciar el segundo commit */
+h1 { letter-spacing: 5px; }
+
 .logo {
   height: 6em;
   padding: 1.5em;
