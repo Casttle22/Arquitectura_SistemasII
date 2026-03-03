@@ -3,6 +3,7 @@ name: Build & Push (Assignment-04 -> Docker Hub)
 on:
   push:
     branches: ["assignment-04"]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -10,7 +11,6 @@ permissions:
 jobs:
   dockerhub:
     runs-on: ubuntu-latest
-    environment: assignment-04
 
     steps:
       - name: Checkout
