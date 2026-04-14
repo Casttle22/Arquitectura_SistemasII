@@ -1,0 +1,31 @@
+export const typeDefs = /* GraphQL */ `
+  type Author {
+    id: ID!
+    name: String!
+    bio: String
+    createdAt: String!
+    books: [Book!]!
+  }
+
+  type Book {
+    id: ID!
+    title: String!
+    genre: String!
+    publishedYear: Int
+    createdAt: String!
+    authorId: ID!
+    author: Author!
+  }
+
+  type Query {
+    authors: [Author!]!
+    author(id: ID!): Author
+    books: [Book!]!
+    book(id: ID!): Book
+  }
+
+  type Mutation {
+    createAuthor(name: String!, bio: String): Author!
+    createBook(title: String!, genre: String!, publishedYear: Int, authorId: ID!): Book!
+  }
+`;
