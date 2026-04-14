@@ -6,25 +6,19 @@ datasource db {
   provider = "postgresql"
 }
 
-model User {
-  id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  age       Int
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
 
-  tasks     Task[]
+model Author {
+  id    Int     @id @default(autoincrement())
+  name  String
+  bio   String
+  books Book[]
 }
 
-model Task {
-  id          String   @id @default(cuid())
-  title       String
-  description String
-  priority    Int
-  done        Boolean  @default(false)
-  createdAt   DateTime @default(now())
-
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
+model Book {
+  id            Int     @id @default(autoincrement())
+  title         String
+  genre         String
+  publishedYear Int
+  authorId      Int
+  author        Author  @relation(fields: [authorId], references: [id])
 }

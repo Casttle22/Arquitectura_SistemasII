@@ -3,7 +3,15 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "tsx watch src/index.ts",
+    "seed": "tsx prisma/seed.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "prisma:generate": "prisma generate",
+    "db:migrate:dev": "prisma migrate dev",
+    "db:migrate": "prisma migrate deploy",
+    "db:seed": "prisma db seed"
   },
   "keywords": [],
   "author": "",
@@ -11,15 +19,22 @@
   "description": "",
   "dependencies": {
     "@apollo/server": "^5.5.0",
+    "@prisma/adapter-pg": "^7.7.0",
     "@prisma/client": "^7.7.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "graphql": "^16.13.2",
-    "prisma": "^7.7.0"
+    "graphql-yoga": "^5.21.0",
+    "pg": "^8.20.0"
   },
   "devDependencies": {
     "@types/node": "^25.6.0",
+    "prisma": "^7.7.0",
     "tsx": "^4.21.0",
     "typescript": "^6.0.2"
+  },
+  "type": "module",
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   }
 }
